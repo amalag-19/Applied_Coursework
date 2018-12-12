@@ -1,0 +1,17 @@
+{
+    "contents" : "source(\"untitled folder/untitled folder/QDA.R\")\nsource(\"untitled folder/untitled folder/logit.R\")\nsource(\"untitled folder/untitled folder/lda.function.R\")\nsource(\"untitled folder/untitled folder/transformation_function.R\")\n\nmscls.rt <- function(true.cl, pred.cl){\n  sum((true.cl!=pred.cl))/length(true.cl)\n}\n\nload(\"untitled folder/cv_data.RData\")\n\n\n\n\ncv.fun <- function(cv.data){\n  #Parameters\n  fold = 5\n  alg = 3\n  miss.class <- matrix(data = NA_real_,nrow = fold,ncol = alg)\n  colnames(miss.class) <- c(\"LDA\",\"QDA\",\"Logit\")\n  \n  for(i in 1:fold){\n    temp <- cv.data$Data\n    temp[[i]]<-NULL\n    test <- cv.data$Data[[i]]\n    train <- do.call(rbind ,temp)\n    \n    tr <- trsfrm.gen(train.data = train[,-ncol(train)])\n    \n    tr.train <- cbind(train[,ncol(train)],tr(train[-ncol(train)]))\n    tr.test <- cbind(test[,ncol(test)],tr(test[-ncol(train)]))\n    colnames(tr.test) <- c(names(test)[ncol(test)],names(test)[1:(ncol(test)-1)])\n    colnames(tr.train) <- c(names(train)[ncol(train)],names(train)[1:(ncol(train)-1)])\n    ########LDA\n    \n    lda.model <- my.lda(response = tr.train[,1],formula = \"~.\",data = data.frame(tr.train[,-1]))\n    lda.pred <- predict.my.lda(x = tr.test[,-1],model = lda.model,prior = c(.5,.5))\n    miss.class[i,1] <- mscls.rt(tr.test[,1],lda.pred)\n    \n    #######QDA\n    qda.pred<-rep(NA_integer_,nrow(tr.test))\n    for(k in 1:nrow(tr.test)){\n      qda.pred[k]<-QDA.1(tr.train,as.matrix(tr.test[k,-1]))\n    }\n    qda.pred\n    miss.class[i,2]<-mscls.rt(tr.test[,1],qda.pred)\n    \n    ########Logistic Regression \n    logit.bs <- logit.m(X =cbind(1,tr.train[,-1]), y = tr.train[,1])\n    logit.pred <- predict.logit.cl(logit.bs, X = cbind(1, tr.test[,-1]))                   \n    miss.class[i,3] <- mscls.rt(tr.test[,1], logit.pred)\n  }\n  return(miss.class)\n}\n\nmiss.class <- cv.fun(cv.data)\nmscls.mns <- colMeans(miss.class)\n\n\n\n\n##########PCA\nentire.data <- list()\nfor(i in 1:fold){\n  entire.data[[i]] <- data.frame(cv.data$Data[[i]],Fold=i)\n}\nentire.data<-do.call(rbind,entire.data)\n\ncor(entire.data[,-c(ncol(entire.data)-1,ncol(entire.data))])\npdf(file= \"untitled folder/untitled folder/untitled.pdf\",width = 100,height = 100)\npairs(entire.data[,-c(ncol(entire.data)-1,ncol(entire.data))])\ndev.off()\nprince <- princomp(entire.data[,-c(ncol(entire.data)-1,ncol(entire.data))])\nprince$loadings\nP <- prince$loadings[,1:20]\nPX <- as.matrix(entire.data[,-c(ncol(entire.data)-1,ncol(entire.data))])%*%P\npca.data <- cbind(PX, entire.data[,c(ncol(entire.data)-1, ncol(entire.data))])\ncv.data.pca <- split(pca.data,f = pca.data[,ncol(pca.data)])\nfor(i in 1:5){\n  cv.data.pca[[i]][ncol(cv.data.pca[[i]])] <- NULL\n}                   \n\n\ncv.data.pca2 <- list()\ncv.data.pca2[[2]] <- cv.data.pca\nnames(cv.data.pca2)<- c(\"NULL\",\"Data\")\ncolMeans(cv.fun(cv.data.pca2))\n",
+    "created" : 1444500490445.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3110457611",
+    "id" : "A60B0760",
+    "lastKnownWriteTime" : 1444500468,
+    "path" : "~/Box Sync/PSU/Fall 2015/Data Mining (STAT 557)/Project 1/Main.R",
+    "project_path" : null,
+    "properties" : {
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

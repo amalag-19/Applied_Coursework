@@ -1,0 +1,13 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Likelihood Free MCMC}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Theoretical background}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Variants of LF-MCMC algorithm}{section.2}% 4
+\BOOKMARK [3][-]{subsubsection.2.2.1}{Error augmented sampler}{subsection.2.2}% 5
+\BOOKMARK [3][-]{subsubsection.2.2.2}{Multiple augmented sampler}{subsection.2.2}% 6
+\BOOKMARK [3][-]{subsubsection.2.2.3}{Marginal space sampler}{subsection.2.2}% 7
+\BOOKMARK [1][-]{section.3}{LF-MCMC in high dimensions}{}% 8
+\BOOKMARK [1][-]{section.4}{Matrix Normal Distribution}{}% 9
+\BOOKMARK [1][-]{section.5}{Simulation}{}% 10
+\BOOKMARK [1][-]{section.6}{Results and Conclusion}{}% 11
+\BOOKMARK [1][-]{section.7}{Discussion}{}% 12
+\BOOKMARK [1][-]{section.8}{Future work}{}% 13

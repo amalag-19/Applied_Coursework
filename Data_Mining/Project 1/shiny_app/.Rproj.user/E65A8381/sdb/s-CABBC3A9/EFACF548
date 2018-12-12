@@ -1,0 +1,17 @@
+{
+    "contents" : "\n# This is the user-interface definition of a Shiny web application.\n# You can find out more about building applications with Shiny here:\n#\n# http://shiny.rstudio.com\n#\n\nlibrary(shiny)\n\nshinyUI(fluidPage(\n\n  # Application title\n  titlePanel(\"Simulations\"),\n\n  # Sidebar with a slider input for number of bins\n  sidebarLayout(\n    sidebarPanel(\n      numericInput(inputId=\"beta.0\",label = \"Beta 0\",value = -2,min = -Inf,max = Inf),\n      numericInput(inputId=\"beta.1\",label = \"Beta 1\",value = 5,min = -Inf,max = Inf),\n      numericInput(inputId=\"beta.2\",label = \"Beta 2\",value = 20,min = -Inf,max = Inf),\n      numericInput(inputId=\"n\",label = \"Number of observations\",value = 100,min = 1,max = Inf,step = 1),\n      actionButton(\"go\",\"Go\")\n    ),\n\n    # Show a plot of the generated distribution\n    mainPanel(\n      plotOutput(\"distPlot\")\n    )\n  )\n))\n",
+    "created" : 1444431985735.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1835931136",
+    "id" : "EFACF548",
+    "lastKnownWriteTime" : 1444438575,
+    "path" : "~/Box Sync/PSU/Fall 2015/Data Mining (STAT 557)/Project 1/shiny_app/ui.R",
+    "project_path" : "ui.R",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

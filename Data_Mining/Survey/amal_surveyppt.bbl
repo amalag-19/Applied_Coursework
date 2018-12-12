@@ -1,0 +1,11 @@
+\begin{thebibliography}{1}
+
+\bibitem{hsieh2013big}
+Cho-Jui Hsieh, M{\'a}ty{\'a}s~A Sustik, Inderjit~S Dhillon, Pradeep~K
+  Ravikumar, and Russell Poldrack.
+\newblock Big \& quic: Sparse inverse covariance estimation for a million
+  variables.
+\newblock In {\em Advances in Neural Information Processing Systems}, pages
+  3165--3173, 2013.
+
+\end{thebibliography}

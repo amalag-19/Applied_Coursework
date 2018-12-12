@@ -1,0 +1,204 @@
+\documentclass{beamer}
+\usepackage{tikz}
+\usetikzlibrary{tikzmark,fit,shapes.geometric}
+
+
+\mode<presentation>
+{
+  \usetheme{Warsaw}
+  % or ...
+
+  \setbeamercovered{transparent}
+  % or whatever (possibly just delete it)
+}
+\addtobeamertemplate{navigation symbols}{}{%
+    \usebeamerfont{footline}%
+    \usebeamercolor[fg]{footline}%
+    \hspace{1em}%
+    \insertframenumber/\inserttotalframenumber
+}
+\setbeamercolor{footline}{fg=blue}
+\setbeamerfont{footline}{series=\bfseries}
+
+\usepackage[english]{babel}
+% or whatever
+
+\usepackage[utf8]{inputenc}
+% or whatever
+
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage{undertilde}
+\usepackage[makeroom]{cancel}
+
+% Or whatever. Note that the encoding and the font should match. If T1
+% does not look nice, try deleting the line with the fontenc.
+
+%%Graphics and Videos
+%\usepackage{graphicx} %The mode "LaTeX => PDF" allows the following formats: .jpg  .png  .pdf  .mps
+%\graphicspath{{./PresentationPictures/}} %Where the figures folder is located
+\usepackage{multimedia}
+%\addmediapath{./Movies/}
+
+\usepackage{amsmath}
+\usepackage{caption}
+%\usepackage{subcaption}
+\usepackage{graphicx}
+%\usepackage{media9}
+
+\title{Sparse inverse covariance estimation using Graphical Lasso and BIGQUIC}
+ % (optional, use only with long paper titles)
+
+\subtitle{STAT 557- Survey}
+
+\author{Amal Agarwal} % (optional, use only with lots of authors)
+% - Give the names in the same order as the appear in the paper.
+% - Use the \inst{?} command only if the authors have different
+%   affiliation.
+
+\institute[Pennsylvania State University] % (optional, but mostly needed)
+{
+  \inst{}%
+  {\includegraphics[scale=0.6]{logo1.jpg}}\\
+  Department of Statistics\\
+  Pennsylvania State University
+ }
+% - Use the \inst command only if there are several affiliations.
+% - Keep it simple, no one is interested in your street address.
+
+\date % (optional, should be abbreviation of conference name)
+{}
+% - Either use conference name or its abbreviation.
+% - Not really informative to the audience, more for people (including
+%   yourself) who are reading the slides online
+
+\subject{Statistics}
+% This is only inserted into the PDF information catalog. Can be left
+% out. 
+
+
+% If you have a file called "university-logo-filename.xxx", where xxx
+% is a graphic format that can be processed by latex or pdflatex,
+% resp., then you can add a logo as follows:
+
+%\pgfdeclareimage[height=0.5cm]{university-logo}{logo1.jpg}
+%\logo{\pgfuseimage{university-logo}}
+
+
+
+ %Delete this, if you do not want the table of contents to pop up at
+ %the beginning of each subsection:
+\AtBeginSubsection[]
+{
+  \begin{frame}<beamer>{Outline}
+    \tableofcontents[currentsection,currentsubsection]
+  \end{frame}
+}
+
+
+% If you wish to uncover everything in a step-wise fashion, uncomment
+% the following command: 
+
+%\beamerdefaultoverlayspecification{<+->}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+%\begin{frame}{Outline}
+%  \tableofcontents
+%  % You might wish to add the option [pausesections]
+%\end{frame}
+
+%------------------------------------------------------------------------------------
+
+\frame{\frametitle{Graphical models}
+\begin{itemize}
+\item $G = (V,E)$ formed by a collection of vertices
+$V = \left\{1,2,...,p\right\}$, and a collection of edges $E\subset V\times V$. \vspace{0.1in}
+\item Each edge consists of a pair of vertices $(s, t) \in E$.\vspace{0.1in}
+\item Undirected graph models: No distinction between edge $(s,t)$ and edge $(t,s)$.\vspace{0.1in}
+\item Directed graph models or Bayesian Networks: $(s \rightarrow t)$ to indicate the direction.
+\end{itemize}
+}
+
+\frame{\frametitle{The problem of sparse concentration estimation}
+\begin{itemize}
+\item GMRF: $\utilde{X_1},\utilde{X_2},..., \utilde{X_n} \sim \mathcal{N}(\utilde{\mu},\Sigma)$
+\item Goal: To estimate $\Sigma$ or $C=\Sigma^{-1}$.
+ \begin{itemize}
+\item \textbf{Model Selection}: Identification of zero entries in C $\Leftrightarrow$ Finding the missing edges in the undirected graph $\Leftrightarrow$ Conditional independencies.
+\item \textbf{Model estimation}: Estimation of the non-zero entries in C.
+ \end{itemize}
+\item Log likelihood\footnote{Ming Yuan \& Yi Lin,"Model Selection and estimation in gaussian graphical model", Biometrika,94(1):19-35,2007}:\[l(\utilde{\mu},C)=\dfrac{n}{2}log|C|-\dfrac{1}{2}\sum\limits_{i=1}^{n}(\utilde{X_i}-\utilde{\mu})^TC(\utilde{X_i}-\utilde{\mu})\]
+\item MLE of $(\utilde{\mu},\Sigma)$ is $(\overline{X},\overline{A})$, where \[\overline{A}=\dfrac{1}{n}\sum\limits_{i=1}^n(\utilde{X_i}-\utilde{\overline{X}})(\utilde{X_i}-\utilde{\overline{X}})^T\] 
+\end{itemize}
+}
+
+\frame{\frametitle{The problem of sparse concentration estimation}
+\begin{itemize}
+\item $L_1$ Lasso penalty term in the log likelihood function by putting the following constraint.
+\[\sum\limits_{i\neq j}|c_{ij}|\leq t\]
+\item For centered data, 2nd term in the log likelihood function transforms as:
+\begin{equation*}
+\begin{aligned}
+\dfrac{1}{n}\sum\limits_{i=1}^n\utilde{X_i}^TC\utilde{X_i}&=\dfrac{1}{n}\sum\limits_{i=1}^ntr(\utilde{X_i}^TC\utilde{X_i})\\&=\dfrac{1}{n}\sum\limits_{i=1}^ntr(C\utilde{X_i}\utilde{X_i}^T)\\&=tr\left(C\left[\dfrac{1}{n}\sum\limits_{i=1}^n\utilde{X_i}\utilde{X_i}^T\right]\right)\\&=tr(C\overline{A})
+\end{aligned}
+\end{equation*}
+\end{itemize}
+}
+
+\frame{\frametitle{The problem of sparse concentration estimation}
+\begin{itemize}
+\item Thus our optimization problem becomes: Minimize \[l(C)=-\text{log}|C|+tr(C\overline{A}) \hspace{0.2in}\text{subject to}\]\[ \sum\limits_{i\neq j}|c_{ij}|\leq t\] 
+\item Objective function and the feasible region are convex; Minimize
+\[-\text{log}|C|+tr(C\overline{A})+\lambda\sum\limits_{i\neq j}|c_{ij}|\]
+where $\lambda$ is the tuning parameter.
+\end{itemize}
+}
+
+\frame{\frametitle{Preliminaries for Graphical Lasso}
+\begin{itemize}
+\item Let $W$ be the estimate of $\Sigma$. Partitioning $W$ and $S$ as \[\begin{bmatrix}W_{11}& w_{12} \\w_{12}^T & w_{22}\end{bmatrix}\hspace{0.2in}\begin{bmatrix}S_{11}& s_{12} \\s_{12}^T & s_{22}\end{bmatrix}\]
+\item It can be shown that the solution for $w_{12}$ satisfies
+\begin{equation}
+w_{12} = \text{argmin}_y\left\{ y^TW_{11}^{-1}y : ||y-s_{12}||_{\infty} \leq \lambda\right\}
+\end{equation}
+\item Using covex duality, it can be shown that this can be solved by solving the corresponding dual problem as 
+\begin{equation}
+\text{min}_\beta\left\{\dfrac{1}{2}||W_{11}^{1/2}\beta-b||^2+\rho||\beta||_1\right\}
+\end{equation}
+where $b=W_{11}^{-1/2}s_{12}$.
+\end{itemize}
+}
+
+\frame{\frametitle{Graphical Lasso algorithm}
+\begin{itemize}
+\item Start with $W = S +\lambda I$.\footnote{J.Friedman, T. Hastie and R.Tibshirani, "Sparse inverse covariance estimation with the graphical lasso", Biostatistics, vol. 9, no. 3, pp. 432-441, 2008} The diagonal of $W$ remains unchanged in what follows.
+\vspace{0.1in}
+\item For each $j = 1, 2, . . . p$, solve the lasso problem (1), which takes as input the inner products $W_{11}$ and $s_{12}$. This gives a $p-1$ vector solution $\hat{\beta}$. 
+\vspace{0.1in}
+\item Fill in the corresponding row and column of $W$ using $w_{12} = W_{11}\hat{\beta}$.
+\vspace{0.1in}
+\item Continue until convergence.
+\end{itemize}
+}
+
+\frame{\frametitle{BIGQUIC}
+\begin{itemize}
+\item State of the art techniques do not scale to problems for more than $20,000$ variables. 
+\item The BIGQUIC algorithm\footnote{Cho-Jui Hsieh, M{\'a}ty{\'a}s A Sustik, Inderjit S Dhillon, Pradeep K Ravikumar and Russell Poldrack, "Big \& quic: Sparse inverse covariance estimation for a million variables", Advances in Neural Information Processing Systems, pp. 3165-3173, 2013} can solve 1 million dimensional $L_1$ regularized Gaussian MLE problems (with 1000 billion parameters) using a single machine with bounded memory.
+\item Key features:
+\begin{itemize}
+\item Block coordinate descent with blocks chosen via a clustering scheme to minimize repeated computations.
+\item Allows inexact computations for specific components.
+\item Super linear or quadratic convergence rates.
+\end{itemize}
+
+\end{itemize}
+}
+
+\end{document}

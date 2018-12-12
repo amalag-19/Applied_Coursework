@@ -1,0 +1,17 @@
+{
+    "contents" : "numer <- function(x, betas, k, K){\n  return(exp(as.numeric(x) %*% betas))  \n}\n\ndenom <- function(x, betas, K){\n  esm <- 0\n  for(k in 1:(K-1)){\n    esm <- esm + exp(x %*% betas)\n  }\n  return(1+esm)\n}\n\npi.fun <- function(x, betas, k, K, denom.v){\n  if(k == K){\n    return(1/denom.v)\n  }\n  else{\n    return(numer(x, betas, k, K)/denom.v)\n  }\n}\n\nclass.ind <- function(cl) {\n  n <- length(cl)   # number of observations\n  x <- matrix(0, n, length(levels(cl))) # matrix of zeros nobs x nclasses\n  x[(1L:n) + n * (as.integer(cl) - 1L)] <- 1 # Create indicator matrix\n  dimnames(x) <- list(names(cl), levels(cl)) # add column names\n  x # return indicator matrix\n}\n\nstopcrit <- function(beta.old, beta.new, iter, min.iter = 10, max.iter = 1000, ep = 0.01){\n  beta.diff.norm <- sqrt(sum((beta.new - beta.old)^2))\n  if((beta.diff.norm< ep | iter >= max.iter) & iter > min.iter){\n    invisible(TRUE)\n  }\n  else{\n    invisible(FALSE)\n  }\n}\n\nlogit.m <- function(X, y){\n  N <- length(y)\n  beta.old <- rep(0, dim(X)[2])\n  beta.new <- rep(0, dim(X)[2])\n  K <- 2\n  iter <- 0\n  while(stopcrit(beta.old, beta.new, iter)==FALSE){\n    beta.old <- beta.new\n    P <- matrix(NA, nrow =N, ncol = (K-1))\n    # Denominators\n    d.v <- apply(denom, X = X, MARGIN = 1, beta.old, K) \n    # Create Probability matrix\n    for(i in 1:N){\n      for(j in 1:(K-1)){\n        P[i,j] <-pi.fun(X[i,],  betas = beta.old, k = j, K = K, denom.v = d.v[i])\n      }\n    }\n    X.t <- t(t(X) %*% diag(as.vector(P)*as.vector(1-P), nrow = N))\n    beta.new <- beta.old + solve(t(X)%*%X.t)%*%t(X)%*%(y - P)\n    iter = iter +1\n  }\n  return(beta.new)\n}\n\n\npredict.logit <- function(betas, X){\n  exp(X%*%betas)/(1 + exp(X%*%betas))\n}\n\npredict.logit.cl <- function(betas, X, thsh = 0.5){\n  (predict.logit(betas, X) > thsh)\n}\n\n",
+    "created" : 1444435391123.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1832495870",
+    "id" : "458BFA82",
+    "lastKnownWriteTime" : 1444432287,
+    "path" : "~/Box Sync/PSU/Fall 2015/Data Mining (STAT 557)/Project 1/shiny_app/logit.R",
+    "project_path" : "logit.R",
+    "properties" : {
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

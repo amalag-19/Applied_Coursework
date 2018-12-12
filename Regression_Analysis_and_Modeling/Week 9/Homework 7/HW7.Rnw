@@ -1,0 +1,249 @@
+
+%! program = pdflatex
+
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{float} % to keep the figures in place
+
+\usepackage{color}
+\newcommand{\cred}{ \color{red}}
+\newcommand{\cgreen}{\color{green}}
+\newcommand{\cblue}{\color{blue}}
+\newcommand{\cmag}{\color{magenta}}
+\newcommand{\bn}{\begin{enumerate}}
+\newcommand{\en}{\end{enumerate}}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\be}{\begin{eqnarray}}
+\newcommand{\ee}{\end{eqnarray}}
+\newcommand{\by}{\begin{eqnarray*}}
+\newcommand{\ey}{\end{eqnarray*}}
+\renewcommand{\labelenumi}{(\alph{enumi}) }
+%
+\usepackage[margin=2.2cm, includehead]{geometry}% see geometry.pdf on how to lay out the page. There's lots.
+\geometry{letterpaper} % or letter or a5paper or ... etc
+% \geometry{landscape} % rotated page geometry
+%\bibpunct{(}{)}{;}{a}{,}{,}
+%\setlength{\textwidth}{16cm}
+%\setlength{\textheight}{21cm}
+\def\nonumber{\global\@eqnswfalse}
+\newcounter{parnum}
+\newcommand{\N}{%
+  \noindent\refstepcounter{parnum}%
+   \makebox[\parindent][l]{\textbf{[\arabic{parnum}]}}\quad  }
+% Use a generous paragraph indent so numbers can be fit inside the
+% indentation space.
+\setlength{\parindent}{1.5em}
+
+% See the ``Article customise'' template for come common customisations
+
+\date{}
+%\date{} % delete this line to display the current date
+
+%%% BEGIN DOCUMENT
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+%\large
+%\maketitle
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{defn}[thm]{Definition}
+\newtheorem{exam}[thm]{Example}
+\newtheorem{qstn}[thm]{Question}
+
+%%%
+\newpage
+\begin{center}
+{\bf Homework 7 - STAT 511}\\
+Amal Agarwal
+\end{center}
+%==========================
+\section*{Answer 1}
+\bn
+\item
+\begin{itemize}
+\item The given data was extracted and exploratory data analysis was conducted by plotting pairwise scatter plots. In particular the plot of consumption vs. date indicates positive autocorrelation as can be seen by the following plot:
+\begin{figure}[H]
+<<echo=T, fig=T>>=
+ice=read.csv("icecream.csv",sep=",")
+plot.ts(ice$IC)
+ice<-ice[-length(ice$date),]
+@
+\end{figure}
+
+Fitting a simple linear model 
+
+\begin{equation*}
+\begin{aligned}
+IC_{i} &= \beta_0 + \beta_1 date_{i} +  \beta_2 price_{i} + \beta_3 income_{i} + \beta_4 temp_{i} + \epsilon_{i}
+\end{aligned}
+\end{equation*}
+where $\epsilon_{i} \sim N(0,\sigma^2)$\\
+
+and observing the summary as 
+
+<<echo=T>>=
+fit1=lm(IC~.,data=ice)
+summary(fit1)
+@
+
+we can infer the following things:
+\begin{itemize}
+\clearpage
+\item Plotting the reiduals vs. date we get,
+\begin{figure}[H]
+<<echo=F, fig=T>>=
+res1=resid(fit1)
+plot(ice$date,res1,type='l')
+abline(h=0)
+@
+\end{figure}
+The above residual plot clearly confirms our hypothesis of positive autocorrelation under the fitted model. However, it also indicates a global periodic trend and suggests that if we include a sine/cosine term, we might be able to use our normal uncorrelated errors model.\\
+\clearpage
+\item Testing for the autocorrelation:
+\begin{figure}[H]
+<<echo=T, fig=T>>=
+acf(res1)
+@
+\end{figure}
+\begin{figure}[H]
+<<echo=T, fig=T>>=
+pacf(res1)
+@
+\end{figure}
+\end{itemize}
+Tis confirms that only lag-1 autocorrelation is significant and so we can use an AR(1) time series model.
+
+\item Now fitting the following AR(1) correlated errors linear model: 
+
+\begin{equation*}
+\begin{aligned}
+IC &= \beta_0 + \beta_1 date +  \beta_2 price + \beta_3 income + \beta_4 temp + \epsilon
+\end{aligned}
+\end{equation*}
+where $\epsilon \sim N(0,\Sigma), \Sigma_{ij}=\dfrac{\sigma_u^2}{1-\rho^2}\rho^{|i-j|}$\\
+
+<<echo=T>>=
+library(nlme)
+fit2=gls(IC~.,data=ice,correlation=corAR1(),method="REML")
+summary(fit2)
+@
+\clearpage
+Checking the residual plot again:
+\begin{figure}[H]
+<<echo=F, fig=T>>=
+res2=resid(fit2)
+plot(ice$date,res2,type='l')
+abline(h=0)
+@
+\end{figure}
+The above plot looks much more better.
+Based on the summary of the fit, it is clear that the p-values for the date, price and income are very large (greater than 0.05 significance criteria) which suggests that these predictor variables are not statistically significant in explaining the variation in consumption. Thus, these variables can be dropped from the model.\\
+
+\item Fitting the following correlated errors linear model:
+
+\begin{equation*}
+\begin{aligned}
+IC &= \beta_1 temp + \epsilon
+\end{aligned}
+\end{equation*}
+where $\epsilon \sim N(0,\Sigma), \Sigma_{ij}=\dfrac{\sigma_u^2}{1-\rho^2}\rho^{|i-j|}$\\
+
+<<echo=T>>=
+fit3=gls(IC~temp,data=ice,correlation=corAR1(),method="REML")
+summary(fit3)
+@
+\clearpage
+Checking the residual plot again:
+\begin{figure}[H]
+<<echo=T, fig=T>>=
+res3=resid(fit3)
+plot(res3,type='l')
+abline(h=0)
+@
+\end{figure}
+The residual plot looks good now since the positive autocorrelation has been taken into account. There is no visible non-linear trend.\\
+
+Clearly the estimate of $\rho$ in our model is 0.7557313 which indicates a high postive lag 1 autocorrelation.
+
+\clearpage
+The qq plot of residuals is given as:
+\begin{figure}[H]
+<<echo=F, fig=T>>=
+qqnorm(res3)
+qqline(res3)
+@
+\end{figure}
+
+The above plot shows some short tails which are not significant. Hence our normality assumption is satisfied.
+
+The estimated coeffiecients are given as:
+<<echo=T>>=
+fit3$coeff
+@
+
+The positive slope of 0.002 shows that the mean consumption increases by 0.002 units with a unit increase in temperature. The postive value of intercept indiactes that the consumption at zero temperature. Note that the temperature is in Fahrenheit and thus it makes sense that even at $0^0$ F, the consumtion is 0.235 units. Further the estimated value of the nuisance parameter $\sigma_u^2$ is 
+
+<<echo=T>>=
+X=cbind(1,ice$temp)
+n=29
+p=2
+rho.hat=0.7557313
+C.ar1=corAR1(rho.hat)
+C.ar1=Initialize(C.ar1,data=ice)
+R=corMatrix(C.ar1)
+W=solve(R[1:29,1:29]/(1-(rho.hat)^2))
+sigma2<-(t(res3)%*%W%*%res3)/(n-p)
+sigma2
+@
+
+\end{itemize}
+\clearpage
+\item Using the procedure mentioned above, the p-value under t distribution for $H_0: \beta_1=0$ can be calculated as
+<<echo=T>>=
+Y<-solve(t(X)%*%W%*%X)
+F<-(as.numeric(fit3$coeff[2])^2)/(Y[2,2]*sigma2)
+p_val<-2*(1-pt((sqrt(F)),(n-p)))
+p_val
+@
+
+Note that this caluclated p value  is same as the p value obtained from the summary of fitting the final model i.e. summary of fit 3 shown earlier.
+
+\clearpage
+\item The predicted value at date=30 calculated using predict function is given as:
+<<echo=T>>=
+ice=read.csv("icecream.csv",sep=",")
+newdata=ice[30,]
+Y30_cap=predict(fit3, newdata)
+Y30_cap
+@
+which is slightly different from the true response 
+<<echo=T>>=
+ice$IC[30]
+@
+The prediction interval an be calculated as:
+<<echo=T>>=
+H=X%*%Y%*%t(X)%*%W
+I=diag(1,29)
+V=((I-H)%*%solve(W)%*%t(I-H))
+h29<-V[29,29]
+h29
+X30=matrix(c(1,ice$temp[30]),nrow=1,ncol=2)
+cf=(1/(1-rho.hat^2))+((rho.hat^2)*h29)+(X30%*%Y%*%t(X30))
+s=sqrt(fit3$sigma^2*cf)
+U=Y30_cap+s*qt(0.975,(n-p))
+L=Y30_cap-s*qt(0.975,(n-p))
+L
+U
+@
+
+Clearly the lower bound L=0.2499013 and upper bound U=0.5907236 contains the true response=0.548 at date=30.
+
+\en
+\end{document}

@@ -1,0 +1,1073 @@
+
+%! program = pdflatex
+
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{float} % to keep the figures in place
+\usepackage{placeins}
+
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{color}
+%\usepackage{undertilde}
+\usepackage{enumitem}
+\newcommand{\cred}{ \color{red}}
+\newcommand{\cgreen}{\color{green}}
+\newcommand{\cblue}{\color{blue}}
+\newcommand{\cmag}{\color{magenta}}
+\newcommand{\bn}{\begin{enumerate}}
+\newcommand{\en}{\end{enumerate}}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\be}{\begin{eqnarray}}
+\newcommand{\ee}{\end{eqnarray}}
+\newcommand{\by}{\begin{eqnarray*}}
+\newcommand{\ey}{\end{eqnarray*}}
+\renewcommand{\labelenumi}{(\alph{enumi}) }
+%
+\usepackage[margin=2.2cm, includehead]{geometry}% see geometry.pdf on how to lay out the page. There's lots.
+\geometry{letterpaper} % or letter or a5paper or ... etc
+% \geometry{landscape} % rotated page geometry
+%\bibpunct{(}{)}{;}{a}{,}{,}
+%\setlength{\textwidth}{16cm}
+%\setlength{\textheight}{21cm}
+\def\nonumber{\global\@eqnswfalse}
+\newcounter{parnum}
+\newcommand{\N}{%
+  \noindent\refstepcounter{parnum}%
+   \makebox[\parindent][l]{\textbf{[\arabic{parnum}]}}\quad  }
+% Use a generous paragraph indent so numbers can be fit inside the
+% indentation space.
+\setlength{\parindent}{1.5em}
+
+% See the ``Article customise'' template for come common customisations
+
+\date{}
+%\date{} % delete this line to display the current date
+
+%%% BEGIN DOCUMENT
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+%\large
+%\maketitle
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{defn}[thm]{Definition}
+\newtheorem{exam}[thm]{Example}
+\newtheorem{qstn}[thm]{Question}
+
+%%%
+\newpage
+\begin{center}
+{\bf Homework 2 - STAT 540}\\
+Amal Agarwal
+\end{center}
+%==========================
+\section*{Answer 1}
+\begin{enumerate}[label=(\alph*)]
+\item Psudocode:
+\begin{itemize}
+\item Let the unnormalized target kernel be $h(x)$. Evaluate the endpoints for the rectangle as $b=\sup_{x}(\sqrt{h(x)})$, $c=-\sup_{x}(x\sqrt{h(x)})$, and $d=\sup_{x}(x\sqrt{h(x)})$ using numerical maximization. 
+\item Uniformly sample in 2 dimensions from the rectangle [$c\leq u\leq d] \times [0\leq v\leq b$].
+\item For each sample pair (u,v), check the condition $0\leq v\leq h\left(\sqrt{\left(\dfrac{u}{v}\right)}\right)$ and keep only those pairs which satisfy the condition. Note that since the support is $(1,+\infty)$, we must have $u\geq v$.
+\item Samples from the target density can be obtained by evaluating $\dfrac{u^{*}}{v^{*}}$ where $(u^{*},v^{*})$ are the accepted pairs from previous step.
+\end{itemize}
+
+\item R code for the algorithm is given in "aua257HW2.R" file.
+\item Histogram of the samples along with true target kernel is given below:
+
+<<echo=F>>=
+
+## libraries
+{library(ggplot2)
+  library(tmvtnorm)
+  library(astsa)
+  library(plyr)
+  multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+    library(grid)
+    
+    # Make a list from the ... arguments and plotlist
+    plots <- c(list(...), plotlist)
+    
+    numPlots = length(plots)
+    
+    # If layout is NULL, then use 'cols' to determine layout
+    if (is.null(layout)) {
+      # Make the panel
+      # ncol: Number of columns of plots
+      # nrow: Number of rows needed, calculated from # of cols
+      layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                       ncol = cols, nrow = ceiling(numPlots/cols))
+    }
+    
+    if (numPlots==1) {
+      print(plots[[1]])
+      
+    } else {
+      # Set up the page
+      grid.newpage()
+      pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+      
+      # Make each plot, in the correct location
+      for (i in 1:numPlots) {
+        # Get the i,j matrix positions of the regions that contain this subplot
+        matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+        
+        print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                        layout.pos.col = matchidx$col))
+      }
+    }
+  }}
+
+## Q1 (b)
+## defining the parameters
+{mu<-3
+sigma<-0.8
+zeta<-0.4}
+
+## defining square root of target kernel function
+sqrt.pr<-function(x){
+  t1<-(1+zeta*((x-mu)/sigma))
+  t2<-exp(-(t1^(-1/zeta)))
+  t3<-t1^(-1-(1/zeta))
+  value<-(t2*t3)^(1/2)
+  return(-value)
+}
+
+## defining x times square root of target kernel function
+x.sqrt.pr<-function(x){
+  t1<-(1+zeta*((x-mu)/sigma))
+  t2<-exp(-(t1^(-1/zeta)))
+  t3<-t1^(-1-(1/zeta))
+  value<-x*((t2*t3)^(1/2))
+  return(value)
+}
+
+## defining negative of x times square root of target kernel function
+x.sqrt.pr2<-function(x){
+  t1<-(1+zeta*((x-mu)/sigma))
+  t2<-exp(-(t1^(-1/zeta)))
+  t3<-t1^(-1-(1/zeta))
+  value<-x*((t2*t3)^(1/2))
+  return(-value)
+}
+
+## defining log of target kernel function
+log.pr<-function(x){
+  if (x>=1){
+    t1<-(1+zeta*((x-mu)/sigma))
+    t2<--(t1^(-1/zeta))
+    t3<-(-1-(1/zeta))*log(t1)
+    value<-t2+t3
+  }
+  else {value<--Inf}
+  return(value)
+}
+
+## calculating the bounds b,c,d
+b<--optim(par = 1.5,fn = sqrt.pr,method = "L-BFGS-B",lower = 1, upper = Inf)$value
+c<-optim(par = 1.5,fn = x.sqrt.pr,method = "L-BFGS-B",lower = 1, upper = Inf)$value
+d<--optim(par = 1.5,fn = x.sqrt.pr2,method = "L-BFGS-B",lower = 1, upper = Inf)$value
+
+## defining the ratio of uniforms function for GEV
+ROU.GEV<-function(n){
+  u.f<-rep(NA_real_,n)
+  v.f<-rep(NA_real_,n)
+  i<-1
+  j<-0
+  while(i<=n){
+    u<-runif(1, min=c, max=d)
+    v<-runif(1,min=0,max=b)
+    if (log(v)<(0.5*log.pr(u/v))){
+      u.f[i]<-u
+      v.f[i]<-v
+      i<-i+1
+    }
+    else {j<-j+1}
+  }
+  samples<-u.f/v.f
+  return(list(u.f,v.f,samples))
+}
+
+## defining the function expectation to calculate Monte Carlo estimates of expectation
+## and MonteCarlo standard errors
+Expectation<-function(n){
+  t<-system.time(
+    s<-ROU.GEV(n)
+  ) 
+  sampling.rate<-n/as.numeric(t[3])
+  ## defining the sequence for number of iterations
+  m<-seq(100,n,by=100)
+  ## length of the sequence m
+  ml<-length(m)
+  ## Initializing a matrix R for storing Monte Carlo estimates and MC
+  ## standard errors for x
+  R<-matrix(NA_real_,ml,2)
+  ## loop for storing Monte Carlo estimates and MC standard errors in R
+  for (j in 1:ml){
+    R[j,1]<-mean(s[[3]][1:m[j]])
+    ## Using the batchmeans function to calculate MCMC standard errors
+    R[j,2]<-sqrt(var(s[[3]][1:m[j]])/m[[j]])
+  }
+  return(list(s,R,sampling.rate))
+}
+
+## defining the sample size as the optimum chosen as above
+n<-100000
+
+## For optimal sample size, generating samples from Ratio of uniforms, estimates and MCse
+s<-Expectation(n)
+
+############################################
+## Q1 (c)
+## creating vectors to plot true target kernel
+x.vec<-seq(1,15,length.out = n)
+y.vec<-rep(NA_real_,length(x.vec))
+for (i in 1:length(x.vec)){
+  y.vec[i]<-(1/sigma)*exp(log.pr(x.vec[i]))
+}
+
+## defining preliminaries for plotting using ggplot
+thema<-theme_bw(base_size = 20) +
+  theme(axis.title.x = element_text(size = 8, colour = "black"), 
+        axis.text.x  = element_text(angle = 0, size = 8, colour = "black"),
+        axis.title.y = element_text(size = 8, colour = "black"), 
+        axis.text.y  = element_text(angle = 0, size = 8, colour = "black"),
+        legend.text  = element_text(size = 8, colour = "black"), 
+        legend.title = element_text(size = 8, colour = "black"),
+        panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(colour = "white", linetype = NULL),
+        panel.grid.minor = element_line(colour = "white", linetype = NULL),
+        text = element_text(size = 8, colour = "black"),
+        title =  element_text(size = 8, face = "bold"))
+
+f<-data.frame("samples"=s[[1]][[3]],"u"=s[[1]][[1]],"v"=s[[1]][[2]],"x.vec"=x.vec,"y.vec"=y.vec)
+p<-ggplot(data=f)
+
+@
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+
+## plotting the histogram of samples and comparing with true target kernel
+p+ geom_histogram(mapping = aes(x=samples,y=..density..),fill="steelblue",subset=.(samples<15))+labs(x="x",y="Density")+geom_line(mapping = aes(x = x.vec,y = y.vec))
+@
+\caption{Plot of histogram of samples and comparing with true target kernel}
+\end{centering}
+\end{figure}
+\clearpage
+Plot of the ratio of uniforms of regions is given below:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+
+## plotting the histogram of samples and comparing with true target kernel
+## plotting the ratio of unifroms region
+p+geom_point(mapping = aes(x=u,y=v),col="steelblue")
+@
+\caption{Plot of ratio of uniforms region}
+\end{centering}
+\end{figure}
+
+\item The optimal sample size such that the Monte Carlo standard error is less than 5\% of the estimated expectation was found as \textbf{$248$}. This was obtained by running the ratio of uniforms function multiple items generating different sets of samples and calculating the optimal size in each case and taking the mean of the optimal sizes. 
+
+The estimate of the expected value for $n=100,000$ was found as \textbf{\Sexpr{round(s[[2]][nrow(s[[2]]),1],digits=2)}}.
+
+Plot of the estimates of expected value with the sample size is given as:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+## plotting the estimates vs. sample size
+g<-data.frame("sample.size"=seq(100,n,by=100),"estimates"=s[[2]][,1],"MCse"=s[[2]][,2])
+q<-ggplot(data=g)
+q+geom_line(mapping = aes(x=sample.size,y=estimates),col="steelblue")
+@
+\caption{Plot of Monte Carlo estimates vs. sample size}
+\end{centering}
+\end{figure}
+\clearpage
+Plot of the Monte Carlo standard errors with the sample size is given as:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+## plotting the Monte carlo standard error vs. sample size
+q+geom_line(mapping = aes(x=sample.size,y=MCse),col="steelblue")
+sampling.rate<-s[[3]]
+@
+\caption{Plot of Monte Carlo standard errors vs. sample size}
+\end{centering}
+\end{figure}
+
+\item The number of samples generated per second were found to be \textbf{\Sexpr{round(sampling.rate,digits=0)}}.
+
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Answer 2}
+\begin{enumerate}[label=(\alph*)]
+\item Refer to the file "aua257HW2.R" for R code. Pseudocode is given as follows:
+\begin{itemize}
+\item Start off with $x^{(0)}$ in the support $(1,+\infty)$ chosen suitably after a series of pilot runs. Choose the length of the Markov chain as $m$.
+\item Run loop from $t=0:(m-1)$
+\begin{itemize}
+\item Generate a candidate $x^{*}$ from the propsal $q$ as truncated normal N($x^{(t)},\tau^2,1,+\infty$). For sampling $x^{*}$, inverse cdf transformation is being used as follows:
+\begin{itemize}
+\item Generate $u\sim Uniform(0,1)$.
+\item To obtain $x^{*}$, do the inverse cdf transform on $u$ as $x_i^{*}=qnorm(u\times (pnorm(b_i)-pnorm(a_i)) +pnorm(a_i))$ where qnorm and pnorm are quantile and cdf functions for a normal distribution with parameters same as the mean and variance of $x^{*}$ defined above. 
+\end{itemize}
+\item Accept $x^{*}$ as next state $x^{(t+1)}$ with the following acceptance probability $\alpha$, else assign the current state as next state.
+\[\alpha(x^{*},x^{(t)})=\text{min}\left(1,\dfrac{h(x^{*})q(x^{*},x^{t})}{h(x^{(t)})q(x^{t},x^{*})})\right)\]
+where $h$ is the target kernel without the factor $(1/\sigma)$ in the target density.
+\end{itemize}
+\end{itemize}
+<<echo=F,results=hide>>=
+## Q2 (a) and (b)
+
+## sourcing batchmeans function used to calculate MCMC standard
+## errors later
+source("http://www.stat.psu.edu/~mharan/batchmeans.R")
+
+## defining the parameters
+{mu<-3
+sigma<-0.8
+zeta<-0.4
+a<-mu-(sigma/zeta)}
+
+## defining the posterior kernel on log scale
+log.pr<-function(x){
+  t1<-(1+zeta*((x-mu)/sigma))
+  t2<--(t1^(-1/zeta))
+  t3<-(-1-(1/zeta))*log(t1)
+  value<-t2+t3
+  return(value)
+}
+
+## defining the proposal kernel on log scale
+log.prop<-function(x,m,s,a){
+  t1<-dnorm(x, mean=m, sd=s,log = TRUE)
+  t2<-log(1-pnorm(a, mean=m, sd=s))
+  value<-t1-t2
+  return(value)
+}
+
+## Metropolis Hastings function with inputs as the variance of proposal
+## (tuning parameter) and current state of the MC
+MH<-function(variance,current.state){
+  ## sampling x.star from normal proposal with mean as current state
+  ## of x and specified tuning parameter
+  x.star<-rtmvnorm(n=1, mean=current.state, sigma=variance, lower=mu-(sigma/zeta))
+  ## defining the acceptance probability for sampled x.star on log
+  ## scale
+  accept.probab<-(log.pr(x.star)+log.prop(current.state,x.star,sqrt(variance),a))-(log.pr(current.state)+log.prop(x.star,current.state,sqrt(variance),a))
+  ## sampling u from uniform(0,1) to check for acceptance
+  u<-runif(1, min=0, max=1)
+  ## initializing the indicator flag=0 to check if the sampled x.star
+  ## will be accepted
+  flag<-0
+  ## if-else to define the next state of the chain based on acceptance
+  ## probability
+  if(log(u)<=accept.probab){
+    flag<-1
+    next.state<-x.star
+  }
+  else {next.state<-current.state}
+  ## returning the next state and indicator if the sampled value was
+  ## accepted
+  return(c(next.state,flag))
+}
+
+## defining the function Expectation for running Metropolis-Hastings
+## algortithm and to calculate Monte Carlo estimates and standard errors
+## for x
+Expectation<-function(n,start,variance){
+  ## Initializing the Markov chain
+  x<-rep(NA_real_,n)
+  ## Defining the initial value for the chain
+  x[1]<-start
+  ## Initializing the accept count used to calculate acceptance rate
+  ## of x
+  accept<-0
+  ## loop for RWM updates
+  sys.time<-system.time(for(i in 1:(n-1)){
+    temp<-MH(variance,x[i])
+    x[i+1]<-temp[1]
+    accept<-accept+temp[2]
+  })
+  ## samples obtained from the running the chain for given n
+  samples<-data.frame("iterations"=1:n,"samples"=x)
+  ## calculating the acceptance rate
+  acceptance.rate<-accept/n
+  ## defining the sequence for number of iterations
+  m<-seq(100,n,by=100)
+  ## length of the sequence m
+  ml<-length(m)
+  ## Initializing a matrix R for storing Monte Carlo estimates and MCMC
+  ## standard errors for x
+  R<-matrix(NA_real_,ml,2)
+  ## loop for storing Monte Carlo estimates and MCMC standard errors in R
+  for (j in 1:ml){
+    R[j,1]<-mean(x[1:m[j]])
+    ## Using the batchmeans function to calculate MCMC standard errors
+    R[j,2]<-bm(x[1:m[j]])$se
+  }
+  n.star<-m[which.min((R[,2]/R[,1])<0.5)]
+  ESS<-ess(samples[,2])
+  ESS.rate<-ESS/as.numeric(sys.time[3])
+  ## returning the sampled values of the chain, estimates & standard
+  ## errors of x at varying number of iterations and acceptance rate
+  ## of the chain
+  return(list("samples"=samples,"iterations"=m,"R"=R,"acceptance.rate"=acceptance.rate,"n.star"=n.star,"ESS"=ESS,"ESS.rate"=ESS.rate))
+}
+set.seed(10)
+## defining the sample size
+n<-100000
+
+## defining the tuning parameter (chosen after many pilot runs)
+var.tune<-9.4
+
+## Running the MH algorithm for 3 times with different starting values
+start<-c(3.5,3.7,3.9)
+## creating a vector of empty lists
+result<-vector("list", length(start)) 
+t<-system.time(
+for (j in 1:length(start)){
+  result[[j]]<-Expectation(n,start[j],var.tune)
+})
+set.seed(NULL)
+##########################################
+## Q2 (c)
+## plotting
+f<-list()
+g<-list()
+for(j in 1:length(start)){
+  f[[j]]<-data.frame(result[[j]][[2]],result[[j]][[3]],start[j])
+  g[[j]]<-data.frame(result[[j]][[1]],start[j])
+}
+
+f<-do.call(rbind,f)
+names(f)<-c("iterations","mean","MCMCse","start")
+
+g<-do.call(rbind,g)
+names(g)<-c("iterations","samples","start")
+
+p<-ggplot(data=f)
+q<-ggplot(data=g)
+head(g)
+
+thema<-theme_bw(base_size = 20) +
+  theme(axis.title.x = element_text(size = 8, colour = "black"), 
+        axis.text.x  = element_text(angle = 0, size = 8, colour = "black"),
+        axis.title.y = element_text(size = 8, colour = "black"), 
+        axis.text.y  = element_text(angle = 0, size = 8, colour = "black"),
+        legend.text  = element_text(size = 8, colour = "black"), 
+        legend.title = element_text(size = 8, colour = "black"),
+        panel.background = element_rect(fill = "white"),
+        panel.grid.major = element_line(colour = "white", linetype = NULL),
+        panel.grid.minor = element_line(colour = "white", linetype = NULL),
+        text = element_text(size = 8, colour = "black"),
+        title =  element_text(size = 8, face = "bold"))
+@
+\item The optimal sample size such that the Monte Carlo standard error is less than 5\% of the estimated expectation was found as $1275$. Again this was obtained by running the MH function multiple items generating different sets of samples and calculating the optimal size in each case and taking the mean of the optimal sizes. Note that in this case, since the batchmeans does not work below $1000$, the lower bound for optimum in each case was taken as $1000$.
+
+The estimate of the expected value for $n=100,000$ was found as \textbf{\Sexpr{round(result[[1]][[3]][nrow(result[[1]][[3]]),1],digits=2)}}
+
+\item Diagnostic plots:
+Verifying the acf plot for the chain with starting value as $3.5$ and tuning paramter as $9.4$
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+acf(result[[1]][[1]][,2],lag.max = 50,main="ACF")
+@
+\caption{Plot of ACF os samples}
+\end{centering}
+\end{figure}
+The above plot is reasonably good. For $n=100,000$, the effective sample size was found as \textbf{\Sexpr{round(result[[1]][[6]],digits=0)}}. Thus we can conclude the tuning parameter value of $9.4$ may not be the best but still it works reasonably good.
+
+For the 3 different starting values as \Sexpr{round(start[1],digits=2)},\Sexpr{round(start[2],digits=2)},\Sexpr{round(start[3],digits=2)}, the plot of the estimates as function sample size is given as:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+## plotting mean vs. no. of iterations for different n and methods
+p+ geom_line(mapping = aes(x=iterations,y=mean,group=factor(start),colour=factor(start)),subset=.((iterations%%1000)==0))+labs(x="Number of samples",y="Estimate of the expectation with MCMC standard errors", colour="Starting values")+thema+
+geom_errorbar(mapping = aes(x=iterations,y=mean,ymin=mean-MCMCse,ymax=mean+MCMCse,group=factor(start),colour=factor(start)),subset=.((iterations%%1000)==0))
+@
+\caption{Plot of Monte Carlo estimates vs. sample size}
+\end{centering}
+\end{figure}
+
+Now plotting the MCMC standard errors as a function of sample size for the same starting values:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+p+ geom_line(mapping = aes(x=iterations,y=MCMCse,group=factor(start),colour=factor(start)))+labs(x="Number of samples",y="MCMC standard errors",colour="Starting values")+thema
+@
+\caption{Plot of MCMC standard errors vs. sample size}
+\end{centering}
+\end{figure}
+The above plots show that for different starting alues, the estimates converge to same value and MCMC standard errors converge to 0. This verifies the algorithm to some extent.
+\clearpage
+Plotting the estimated density after $n/2$ and after $n$:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+## estimated density after N/2 and after N
+q1<-q+ geom_density(mapping = aes(x=samples),fill="steelblue",subset=.(start==g[1,3]&iterations[1:(length(iterations)/2)]))+
+  labs(x="",y="Estimated density from the samples",title="After N/2")+thema
+q2<-q+geom_density(mapping = aes(x=samples),fill="tomato",subset=.(start==g[1,3]))+
+  labs(x="",y="Estimated density from the samples",title="After N")+thema
+
+multiplot(q1, q2, cols=2)
+@
+\caption{Plot of estimated density}
+\end{centering}
+\end{figure}
+
+Plotting the estimated density for different starting values:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+q+ geom_density(mapping = aes(x=samples,group=factor(start),colour=factor(start)))+
+  labs(x="",y="Estimated density from the samples",colour="Starting values")+thema
+@
+\caption{Plot of estimated density}
+\end{centering}
+\end{figure}
+
+From the above plots, the estimated densities after $n/2$ and after $n$ look reasonably identical. Also the estimated density for different starting values also overlap to a good extent. This further verifies the robustness and convergence of the algorithm.
+\item The effective samples produced per second was found to be \textbf{\Sexpr{round(result[[1]][[7]],digits=0)}}. This is much lesser than what was obtained in Q1 part (d) i.e. \textbf{\Sexpr{round(sampling.rate,digits=0)}}, which shows that ratio of uniforms is much more efficient for sampling from the given GEV distribution. 
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Answer 3}
+\begin{enumerate}[label=(\alph*)]
+\item Pseudocode for Rejection sampling:
+\begin{itemize}
+\item Generate samples $x^{*}$, such that $x_i^{*}$ is drawn from univariate truncated normal with bounds $(a_i,b_i)$ such that $(a_1,b_1)=(-1,1)$, $(a_2,b_2)=(2,4)$ and $(a_3,b_3)=(3,5)$. The means and variances for the proposal of $x_1^{*}$, $x_2^{*}$ and $x_3^{*}$ are $0$, $1$ \& $0$ and $1$, $2$ \& $3$ respectively. For sampling each $x_i^{*}$, inverse cdf transformation is being used as follows:
+\begin{itemize}
+\item Generate $u\sim Uniform(0,1)$.
+\item To obtain $x_i^{*}$, do the inverse cdf transform on $u$ as $x_i^{*}=qnorm(u\times (pnorm(b_i)-pnorm(a_i)) +pnorm(a_i))$ where qnorm and pnorm are quantile and cdf functions for a normal distribution with parameters same as the mean and variance of $x_i^{*}$ defined above. 
+\end{itemize}
+\item Evaluate $K=\sup_{x}\left(\dfrac{f(x)}{q(x)}\right)$ using numerical maximization where $f(.)$ and $q(.)$ are target and proposal densities, $q$ being the product of $3$ univariate truncated normal densities with parameters as defined above.
+\item Do accept-reject sequence for each $x^{*}$ generated as follows: 
+\begin{itemize}
+\item Generate $u\sim Uniform(0,1)$.
+\item Accept $x^{*}$ as sample from the target if $u\leq \dfrac{f(x_i^{*})}{Kq(x_i^{*})}$. Else reject.
+\end{itemize}
+\item The accepted samples are independent and identically distributed from the target distibution.
+\end{itemize}
+<<echo=F>>=
+## Q3 (b)
+
+## defining the parameters for the given target multivariate truncated normal
+mu<-c(0,1,0)
+sig<-matrix(c(1,0.8,0.3,0.8,2,0.4,0.3,0.4,3),3,3)
+a<-c(-1,2,3)
+b<-c(1,4,5)
+
+## defining the target density function
+target<-function(x,mu,sig,a,b){
+  t1<-pmvnorm(a,b,mean=mu,sigma=sig)
+  t2<- dmvnorm(x = x,mean = mu,sigma = sig)
+  value<-t2/t1
+  return(value)
+}
+
+## defining the function for inverse transformation to generate samples from univariate
+## truncated normal distribution
+inv.tnorm<-function(x,mu,sig2,a,b){
+  t1<-pnorm(a,mean=mu,sd=sqrt(sig2))
+  t2<-pnorm(b,mean=mu,sd=sqrt(sig2))
+  value<-qnorm(x*(t2-t1)+t1,mean=mu,sd=sqrt(sig2))
+  return(value)
+}
+
+## defining the proposal density function
+prop<-function(x,mu,sig,a,b){
+  m<-length(mu)
+  q<-rep(NA_real_,m)
+  for(i in 1:m){
+    q[i]<-dnorm(x[i],mu[i],sqrt(sig[i,i]))/(pnorm(b[i],mean=mu[i],sd=sqrt(sig[i,i]))-pnorm(a[i],mean=mu[i],sd=sqrt(sig[i,i]))) 
+  }
+  value<-prod(q)
+  return(value)
+}
+
+## finding K using optim
+fq<-function(x,mu,sig,a,b){
+  value<-target(x,mu,sig,a,b)/prop(x,mu,sig,a,b)
+  return(-value)
+}
+
+K<--optim(c(0,3,4),fq,mu=mu,sig=sig,a=a,b=b,method="L-BFGS-B",lower=a,upper=b)$value
+
+## defining the function sampler for sampling via accept-reject algorithm 
+sampler<-function(mu,sig,a,b){
+  m<-length(mu)
+  u<-runif(m)
+  x<-rep(NA_real_,m)
+  for (i in 1:m){
+    x[i]<-inv.tnorm(u[i],mu[i],sig[i,i],a[i],b[i])
+  }
+  q<-prop(x,mu,sig,a,b)
+  sample<-rep(NA_real_,m)
+  ## sampling u from uniform(0,1) to check for acceptance
+  u<-runif(1, min=0, max=1)
+  ## initializing the indicator flag=0 to check if the sampled x.star
+  ## will be accepted
+  flag<-0
+  ## if-else to define the next state of the chain based on acceptance
+  ## probability
+  if(u<=target(x,mu,sig,a,b)/(K*q)){
+    flag<-1
+    sample<-x
+  }
+  return(list(sample,flag))
+}
+
+## defining the function Expectation for calculating Monte Carlo estimates and standard
+## errors
+Expectation<-function(n){
+  samples<-matrix(NA_real_,3,n)
+  k<-0
+  j<-1
+  sys.t<-system.time(while(j<=n){
+    t<-sampler(mu,sig,a,b)
+    if(t[[2]]==1){
+      samples[,j]<-t[[1]]
+      j<-j+1
+    }
+    else{
+      k<-k+1
+    }
+  })
+  sampling.rate<-n/as.numeric(sys.t[3])
+  acceptance.rate<-n/(n+k)
+  ## defining the sequence for number of iterations
+  m<-seq(100,n,by=100)
+  ## length of the sequence m
+  ml<-length(m)
+  ## Initializing a matrix means for storing Monte Carlo estimates
+  MC.means<-matrix(NA_real_,3,ml)
+  MC.se<-matrix(NA_real_,3,ml)
+  ## loop for storing Monte Carlo estimates
+  for (j in 1:ml){
+    MC.means[,j]<-(rowSums(samples[,1:m[j]]))/m[j]
+    MC.se[,j]<-sqrt(((rowSums((samples[,1:m[j]]-MC.means[,j])^2))/(m[j]-1))/m[[j]])
+  }
+  return(list(samples,MC.means,MC.se,sampling.rate,acceptance.rate))
+}
+
+n<-100000
+M<-Expectation(n)
+Alg1.m<-M[[2]][,nrow(M[[2]])]
+Alg1.se<-M[[3]][,nrow(M[[2]])]
+Alg1.ESSr<-M[[4]]
+@
+\item The estimate of the expected value for a sample size of $n=100,000$ using above algorithm was found to be (\textbf{\Sexpr{round(M[[2]][1,nrow(M[[2]])],digits=2)}},\textbf{\Sexpr{round(M[[2]][2,nrow(M[[2]])],digits=2)}},\textbf{\Sexpr{round(M[[2]][3,nrow(M[[2]])],digits=2)}}). The corresponding Monte Carlo standard errors for the 3 components were obtained as (\textbf{\Sexpr{round(M[[3]][1,nrow(M[[2]])],digits=2)}},\textbf{\Sexpr{round(M[[3]][2,nrow(M[[2]])],digits=2)}},\textbf{\Sexpr{round(M[[3]][3,nrow(M[[2]])],digits=2)}}).
+\clearpage
+Plots of estimates of expected values of the 3 components and Monte Carlo standard errors with sample size are given below:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+
+## defining the data frame for plotting
+f<-data.frame("sample.size"=seq(100,n,by=100),t(M[[2]]),t(M[[3]]))
+names(f)<-c("sample.size","X1.m","X2.m","X3.m","X1.se","X2.se","X3.se")
+p<-ggplot(data=f)
+
+## plotting the estimates vs. sample size
+p1<-p+geom_line(mapping = aes(x=sample.size,y=X1.m),col="steelblue")+
+  labs(x="Sample size",y="Expec. of X1")
+p2<-p+geom_line(mapping = aes(x=sample.size,y=X2.m),col="steelblue")+
+  labs(x="Sample size",y="Expec. of X2")
+p3<-p+geom_line(mapping = aes(x=sample.size,y=X3.m),col="steelblue")+
+  labs(x="Sample size",y="Expec. of X3")
+p4<-p+geom_line(mapping = aes(x=sample.size,y=X1.se),col="tomato")+
+  labs(x="Sample size",y="MCse for X1")
+p5<-p+geom_line(mapping = aes(x=sample.size,y=X2.se),col="tomato")+
+  labs(x="Sample size",y="MCse for X2")
+p6<-p+geom_line(mapping = aes(x=sample.size,y=X3.se),col="tomato")+
+  labs(x="Sample size",y="MCse for X3")
+
+multiplot(p1, p2, p3, p4, p5, p6,cols=2)
+@
+\caption{Plot of estimates and MCse vs. sample size for all 3 components}
+\end{centering}
+\end{figure}
+The above plots show that for all the 3 components, the estimates of the expected values converge to some value and MCMC standard errors converge to 0. This verifies the rejection sampling algorithm to a great extent.
+\item The number of samples generated per second by the above algorithm is \textbf{\Sexpr{round(M[[4]],digits=0)}}. Note here the number of effective samples generated per $10,000$ samples is again $10,000$ since this is an iid sampler.
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Answer 4}
+\begin{enumerate}[label=(\alph*)]
+\item Pseudocode for the basic importance sampler is given as:
+\begin{itemize}
+\item Generate samples $x^{*}$, such that $x_i^{*}$ is drawn from univariate truncated normal with bounds $(a_i,b_i)$ such that $(a_1,b_1)=(-1,1)$, $(a_2,b_2)=(2,4)$ and $(a_3,b_3)=(3,5)$. The means and variances for the proposal of $x_1^{*}$, $x_2^{*}$ and $x_3^{*}$ are $0$, $1$ \& $0$ and $1$, $2$ \& $3$ respectively. For sampling each $x_i^{*}$, inverse cdf transformation is being used as follows:
+\begin{itemize}
+\item Generate $u\sim Uniform(0,1)$.
+\item To obtain $x_i^{*}$, do the inverse cdf transform on $u$ as $x_i^{*}=qnorm(u\times (pnorm(b_i)-pnorm(a_i)) +pnorm(a_i))$ where qnorm and pnorm are quantile and cdf functions for a normal distribution with parameters same as the mean and variance of $x_i^{*}$ defined above. 
+\end{itemize}
+\item Calculate the weights $w(x^{*})=\dfrac{f(x^{*})}{q(x^{*})}$ where $f(.)$ is the target truncated multivariate normal density and $q(.)$ is the product of $3$ independent univariate truncated normal proposals.
+\item Estimate the expectation by taking the sample mean of $x^{*}\times w(x^{*})$.
+\end{itemize}
+<<echo=F>>=
+## Q4 (b)
+
+## defining the target density function
+target<-function(x,mu,sig,a,b){
+  m<-length(mu)
+  t1<-pmvnorm(a,b,mean=mu,sigma=sig)
+  t2<-dmvnorm(x = x,mean = mu,sigma = sig)
+  value<-t2/t1
+  return(value[1])
+}
+
+## defining the proposal density function
+prop<-function(x,mu,sig,a,b){
+  m<-length(mu)
+  q<-rep(NA_real_,m)
+  for(i in 1:m){
+    q[i]<-dnorm(x[i],mu[i],sqrt(sig[i,i]))/(pnorm(b[i],mean=mu[i],sd=sqrt(sig[i,i]))-pnorm(a[i],mean=mu[i],sd=sqrt(sig[i,i]))) 
+  }
+  value<-prod(q)
+  return(value)
+}
+
+## defining the function imp.sampler to generate samples from the proposal and 
+## approximate the expected value using basic importance sampling.
+imp.sampler<-function(n,mu,sig,a,b){
+  m<-length(mu)
+  samples<-matrix(NA_real_,3,n)
+  w<-rep(NA_real_,n)
+  j<-1
+  t<-system.time(
+    while(j<=n){
+      u<-runif(m)
+      x<-rep(NA_real_,m)
+      for (i in 1:m){
+        x[i]<-inv.tnorm(u[i],mu[i],sig[i,i],a[i],b[i])
+      }
+      w[j]<-(target(x,mu,sig,a,b)/prop(x,mu,sig,a,b))
+      samples[,j]<-x*w[j]
+      j<-j+1
+    })
+  ## defining the sequence for number of iterations
+  m<-seq(100,n,by=100)
+  ## length of the sequence m
+  ml<-length(m)
+  ## Initializing a matrix means for storing Monte Carlo estimates
+  MC.means<-matrix(NA_real_,3,ml)
+  ## Initializing a matrix MC.se for storing Monte Carlo standard errors
+  MC.se<-matrix(NA_real_,3,ml)
+  ## loop for storing Monte Carlo estimates
+  for (j in 1:ml){
+    MC.means[,j]<-(rowSums(samples[,1:m[j]]))/m[j]
+    MC.se[,j]<-sqrt(((rowSums((samples[,1:m[j]]-MC.means[,j])^2))/(m[j]-1))/m[[j]])
+  }
+  ## calculating ESS
+  ESS.10K<-10000/(mean(w[1:10000]^2)/((mean(w[1:10000]))^2))
+  ESS<-n/(mean(w^2)/((mean(w))^2))
+  ESS.rate<-ESS/as.numeric(t[3])
+  return(list(samples,MC.means,MC.se,ESS.10K,ESS.rate))
+}
+
+n<-100000
+M<-imp.sampler(n,mu,sig,a,b)
+Alg2.m<-M[[2]][,nrow(M[[2]])]
+Alg2.se<-M[[3]][,nrow(M[[2]])]
+Alg2.ESS<-M[[4]]
+Alg2.ESSr<-M[[5]]
+@
+\item The estimate of the expected value for a sample size of $n=100,000$ using above algorithm was found to be (\textbf{\Sexpr{round(M[[2]][1,nrow(M[[2]])],digits=2)}},\textbf{\Sexpr{round(M[[2]][2,nrow(M[[2]])],digits=2)}},\textbf{\Sexpr{round(M[[2]][3,nrow(M[[2]])],digits=2)}}). The corresponding Monte Carlo standard errors for the 3 components were obtained as (\textbf{\Sexpr{round(M[[3]][1,nrow(M[[2]])],digits=2)}},\textbf{\Sexpr{round(M[[3]][2,nrow(M[[2]])],digits=2)}},\textbf{\Sexpr{round(M[[3]][3,nrow(M[[2]])],digits=2)}}).
+
+Plots of estimates of expected values of the 3 components and Monte Carlo standard errors with sample size are given below:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+## defining the data frame for plotting
+f<-data.frame("sample.size"=seq(100,n,by=100),t(M[[2]]),t(M[[3]]))
+names(f)<-c("sample.size","X1.m","X2.m","X3.m","X1.se","X2.se","X3.se")
+p<-ggplot(data=f)
+
+## plotting the estimates vs. sample size
+p1<-p+geom_line(mapping = aes(x=sample.size,y=X1.m),col="steelblue")+
+  labs(x="Sample size",y="Expec. of X1")
+p2<-p+geom_line(mapping = aes(x=sample.size,y=X2.m),col="steelblue")+
+  labs(x="Sample size",y="Expec. of X2")
+p3<-p+geom_line(mapping = aes(x=sample.size,y=X3.m),col="steelblue")+
+  labs(x="Sample size",y="Expec. of X3")
+p4<-p+geom_line(mapping = aes(x=sample.size,y=X1.se),col="tomato")+
+  labs(x="Sample size",y="MCse for X1")
+p5<-p+geom_line(mapping = aes(x=sample.size,y=X2.se),col="tomato")+
+  labs(x="Sample size",y="MCse for X2")
+p6<-p+geom_line(mapping = aes(x=sample.size,y=X3.se),col="tomato")+
+  labs(x="Sample size",y="MCse for X3")
+
+multiplot(p1, p2, p3, p4, p5, p6,cols=2)
+@
+\caption{Plot of estimates and MCse vs. sample size for all 3 components}
+\end{centering}
+\end{figure}
+The above plots show that for all the 3 components, the estimates of the expected values converge to some value and MCMC standard errors converge to 0. This verifies the importance sampling algorithm to a great extent.
+\item The number of effective samples for every $10,000$ samples generated was obtained as \textbf{\Sexpr{round(M[[4]],digits=0)}}. The number of effective samples generated per second were \textbf{\Sexpr{round(M[[5]],digits=0)}}. 
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Answer 5}
+\begin{enumerate}[label=(\alph*)]
+\item Pseudocode for the Metropolis Hastings algorithm for the given target density:
+\begin{itemize}
+\item Start off with $x^{(0)}$ in the support $(-1,2,3)\times(1,4,5)$ chosen suitably after a series of pilot runs. Choose the length of the Markov chain as $m$.
+\item Run loop from $t=0:(m-1)$
+\begin{itemize}
+\item Generate a candidate $x^{*}$, such that $x_i^{*}$ is drawn from univariate truncated normal with bounds $(a_i,b_i)$ such that $(a_1,b_1)=(-1,1)$, $(a_2,b_2)=(2,4)$ and $(a_3,b_3)=(3,5)$. The mean for the proposal of $x_i^{*}$ is $x_i^{t}$ and variance $\tau_i^2$ being the tuning parameter. Again for sampling each $x_i^{*}$, inverse cdf transformation is being used as follows:
+\begin{itemize}
+\item Generate $u\sim Uniform(0,1)$.
+\item To obtain $x_i^{*}$, do the inverse cdf transform on $u$ as $x_i^{*}=qnorm(u\times (pnorm(b_i)-pnorm(a_i)) +pnorm(a_i))$ where qnorm and pnorm are quantile and cdf functions for a normal distribution with parameters same as the mean and variance of $x_i^{*}$ defined above. 
+\end{itemize}
+\item Accept $x^{*}$ as next state $x^{(t+1)}$ with the following acceptance probability $\alpha$, else assign the current state as next state.
+\[\alpha(x^{*},x^{(t)})=\text{min}\left(1,\dfrac{h(x^{*})q(x^{*},x^{t})}{h(x^{(t)})q(x^{t},x^{*})})\right)\]
+where $h$ is the target truncated multivariate normal kernel and $q$ is the product of the 3 independent univariate truncated normal proposals.
+\end{itemize}
+\end{itemize}
+<<echo=F,results=hide>>=
+## defining the target density function
+target<-function(x,mu,sig,a,b){
+  t1<-pmvnorm(a,b,mean=mu,sigma=sig)
+  t2<- dmvnorm(x = x,mean = mu,sigma = sig)
+  value<-t2/t1
+  return(value)
+}
+
+## defining the proposal density function
+prop<-function(x,mu,sig,a,b){
+  m<-length(mu)
+  q<-rep(NA_real_,m)
+  for(i in 1:m){
+    q[i]<-dnorm(x[i],mu[i],sqrt(sig[i]))/(pnorm(b[i],mean=mu[i],sd=sqrt(sig[i]))-pnorm(a[i],mean=mu[i],sd=sqrt(sig[i]))) 
+  }
+  value<-prod(q)
+  return(value)
+}
+
+## Metropolis Hastings function with inputs as the variance of proposal
+## (tuning parameter) and current state of the MC
+MH<-function(variance,current.state){
+  ## sampling x.star from truncated normal proposal with mean as current state
+  ## of x and specified tuning parameters
+  m<-length(mu)
+  u<-runif(m)
+  x.star<-rep(NA_real_,m)
+  for (i in 1:m){
+    x.star[i]<-inv.tnorm(u[i],current.state[i],variance[i],a[i],b[i])
+  }
+  ## defining the acceptance probability for sampled x.star on log
+  ## scale
+  accept.probab<-(target(x.star,mu,sig,a,b)/target(current.state,mu,sig,a,b))*(prop(x.star,current.state,variance,a,b)/prop(current.state,x.star,variance,a,b))
+  ## sampling u from uniform(0,1) to check for acceptance
+  u<-runif(1, min=0, max=1)
+  ## initializing the indicator flag=0 to check if the sampled x.star
+  ## will be accepted
+  flag<-0
+  ## if-else to define the next state of the chain based on acceptance
+  ## probability
+  if(u<=accept.probab){
+    flag<-1
+    next.state<-x.star
+  }
+  else {next.state<-current.state}
+  ## returning the next state and indicator if the sampled value was
+  ## accepted
+  return(list(next.state,flag))
+}
+
+## defining the function Expectation for running Random Walk Metropolis
+## algortithm and to calculate Monte Carlo estimates and standard errors
+## for x
+Expectation<-function(n,start,variance){
+  ## Initializing the Markov chain for beta_1
+  x<-matrix(NA_real_,3,n)
+  ## Defining the initial value for the chain
+  x[,1]<-start
+  ## Initializing the accept count used to calculate acceptance rate
+  ## of x
+  accept<-0
+  ## loop for RWM updates
+  sys.time<-system.time(for(i in 1:(n-1)){
+    temp<-MH(variance,x[,i])
+    x[,i+1]<-temp[[1]]
+    accept<-accept+temp[[2]]
+  })
+  ## samples obtained from the running the chain for given n
+  samples<-data.frame("iterations"=1:n,"X1"=t(x)[,1],"X2"=t(x)[,2],"X3"=t(x)[,3])
+  ## calculating the acceptance rate
+  acceptance.rate<-accept/n
+  ## defining the sequence for number of iterations
+  m<-seq(100,n,by=100)
+  ## length of the sequence m
+  ml<-length(m)
+  ## Initializing a matrix MCMC.means for storing MCMC estimates
+  MCMC.means<-matrix(NA_real_,3,ml)
+  ## Initializing a matrix MCMC.se for storing MCMC standard errors for the 3 components
+  ## separately
+  MCMC.se<-matrix(NA_real_,3,ml)
+  ## loop for storing Monte Carlo estimates and MCMC standard errors in R
+  for (j in 1:ml){
+    MCMC.means[,j]<-rowSums(x[,1:m[j]])/m[j]
+    ## Using the batchmeans function to calculate MCMC standard errors
+    MCMC.se[1,j]<-bm(x[1,1:m[j]])$se
+    MCMC.se[2,j]<-bm(x[2,1:m[j]])$se
+    MCMC.se[3,j]<-bm(x[3,1:m[j]])$se
+  }
+  ESS.10K<-c(ess(samples[(1:10000),2]),ess(samples[(1:10000),3]),ess(samples[(1:10000),4]))
+  ESS<-c(ess(samples[,2]),ess(samples[,3]),ess(samples[,4]))
+  ESS.rate<-ESS/as.numeric(sys.time[3])
+  return(list("samples"=samples,"iterations"=m, "means"=MCMC.means, "MCMC.se"=MCMC.se, "acceptance.rate"=acceptance.rate,"ESS.10K"=ESS.10K,"ESS.rate"=ESS.rate))
+}
+
+n<-100000
+start<-matrix(c(0.30,2.66,3.66,0.35,2.71,3.71,0.25,2.61,3.61),3,3)
+##start<-c(0,3,4)
+start
+var.tune<-c(1,2,3)
+M<-vector("list",ncol(start))
+
+for (j in 1:ncol(start)){
+  M[[j]]<-Expectation(n,start[,j],var.tune)
+}
+Alg3.m<-M[[1]][[3]][,nrow(M[[1]][[3]])]
+Alg3.se<-M[[1]][[4]][,nrow(M[[1]][[4]])]
+Alg3.ESS<-M[[1]][[6]]
+Alg3.ESSr<-M[[1]][[7]]
+@
+\item The estimate of the expected value for a sample size of $n=100,000$ using above algorithm was found to be (\textbf{\Sexpr{round(M[[1]][[3]][1,nrow(M[[1]][[3]])],digits=2)}},\textbf{\Sexpr{round(M[[1]][[3]][2,nrow(M[[1]][[3]])],digits=2)}},\textbf{\Sexpr{round(M[[1]][[3]][3,nrow(M[[1]][[3]])],digits=2)}}). The corresponding Monte Carlo standard errors for the 3 components were obtained as (\textbf{\Sexpr{round(M[[1]][[4]][1,nrow(M[[1]][[4]])],digits=2)}},\textbf{\Sexpr{round(M[[1]][[4]][2,nrow(M[[1]][[4]])],digits=2)}},\textbf{\Sexpr{round(M[[1]][[4]][3,nrow(M[[1]][[4]])],digits=2)}}).
+
+Plot of the ACF of samples is given as:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+acf(M[[1]][[1]][,-1],lag.max = 50,main="Plot of ACF of samples")
+@
+\caption{Plot of ACF of samples}
+\end{centering}
+\end{figure}
+For all the 3 components, the above plot is reasonably good which indicates that the tuning parameter value of $(1, 2, 3)$ may not be the best but still it works reasonably good.
+
+For 3 different starting values as $(0.30, 2.66, 3.66)$ ,$(0.35, 2.71, 3.71)$ and $(0.25, 2.61, 3.61)$, labelled as $1$, $2$ and $3$, plots of estimates of expected values of the 3 components and Monte Carlo standard errors with sample size are given below:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+## plotting
+## defining the data frames for plotting
+f<-list()
+g<-list()
+for(j in 1:ncol(start)){
+  f[[j]]<-data.frame(M[[j]][[2]],t(M[[j]][[3]]),t(M[[j]][[4]]),j)
+  g[[j]]<-data.frame((M[[j]][[1]]),j)
+}
+
+f<-do.call(rbind,f)
+names(f)<-c("iterations","mean.X1","mean.X2","mean.X3","MCMCse.X1","MCMCse.X2","MCMCse.X3","start.label")
+
+g<-do.call(rbind,g)
+names(g)<-c("iterations","samples.X1","samples.X2","samples.X3","start.label")
+
+p<-ggplot(data=f)
+q<-ggplot(data=g)
+
+## plotting mean vs. sample size for different starting values
+p1<-p+ geom_line(mapping = aes(x=iterations,y=mean.X1,group=factor(start.label),colour=factor(start.label)),subset=.((iterations%%1000)==0))+labs(x="Number of samples",y="Expec. of X1", colour="Label for starting values")+thema+
+  geom_errorbar(mapping = aes(x=iterations,y=mean.X1,ymin=mean.X1-MCMCse.X1,ymax=mean.X1+MCMCse.X1,group=factor(start.label),colour=factor(start.label)),subset=.((iterations%%1000)==0))
+p2<-p+ geom_line(mapping = aes(x=iterations,y=mean.X2,group=factor(start.label),colour=factor(start.label)),subset=.((iterations%%1000)==0))+labs(x="Number of samples",y="Expec. of X2", colour="Label for starting values")+thema+
+  geom_errorbar(mapping = aes(x=iterations,y=mean.X2,ymin=mean.X2-MCMCse.X2,ymax=mean.X2+MCMCse.X2,group=factor(start.label),colour=factor(start.label)),subset=.((iterations%%1000)==0))
+p3<-p+ geom_line(mapping = aes(x=iterations,y=mean.X3,group=factor(start.label),colour=factor(start.label)),subset=.((iterations%%1000)==0))+labs(x="Number of samples",y="Expec. of X3", colour="Label for starting values")+thema+
+  geom_errorbar(mapping = aes(x=iterations,y=mean.X3,ymin=mean.X3-MCMCse.X3,ymax=mean.X3+MCMCse.X3,group=factor(start.label),colour=factor(start.label)),subset=.((iterations%%1000)==0))
+multiplot(p1, p2, p3,cols=1)
+@
+\caption{Plot of estimates vs. sample size with error bars for all 3 components}
+\end{centering}
+\end{figure}
+
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+## plotting (MCMCse) vs. sample size for different starting values
+p4<-p+ geom_line(mapping = aes(x=iterations,y=MCMCse.X1,group=factor(start.label),colour=factor(start.label)))+labs(x="Number of samples",y="MCMCse for X1",colour="Label for starting values")+thema
+p5<-p+ geom_line(mapping = aes(x=iterations,y=MCMCse.X2,group=factor(start.label),colour=factor(start.label)))+labs(x="Number of samples",y="MCMCse for X2",colour="Label for starting values")+thema
+p6<-p+ geom_line(mapping = aes(x=iterations,y=MCMCse.X3,group=factor(start.label),colour=factor(start.label)))+labs(x="Number of samples",y="MCMCse for X3",colour="Label for starting values")+thema
+multiplot(p4, p5, p6,cols=1)
+@
+\caption{Plot of MCMC se vs. sample size for all 3 components}
+\end{centering}
+\end{figure}
+The above plots show that for all the 3 components and for different starting alues, the estimates converge to same value and MCMC standard errors converge to 0. This verifies the algorithm to some extent.
+Plotting the estimated density after $n/2$ and after $n$:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+## estimated density after N/2 and after N
+## estimated marginal densities after N/2 and after N
+q1<-q+ geom_density(mapping = aes(x=samples.X1),fill="steelblue",subset=.(start.label==1&iterations[1:(length(iterations)/2)]))+
+  labs(x="",y="For X1",title="After N/2")+thema
+q2<-q+geom_density(mapping = aes(x=samples.X1),fill="tomato",subset=.(start.label==1))+
+  labs(x="",y="For X1",title="After N")+thema
+
+q3<-q+ geom_density(mapping = aes(x=samples.X2),fill="steelblue",subset=.(start.label==1&iterations[1:(length(iterations)/2)]))+
+  labs(x="",y="For X2",title="After N/2")+thema
+q4<-q+geom_density(mapping = aes(x=samples.X2),fill="tomato",subset=.(start.label==1))+
+  labs(x="",y="For X2",title="After N")+thema
+
+q5<-q+ geom_density(mapping = aes(x=samples.X3),fill="steelblue",subset=.(start.label==1&iterations[1:(length(iterations)/2)]))+
+  labs(x="",y="For X3",title="After N/2")+thema
+q6<-q+geom_density(mapping = aes(x=samples.X3),fill="tomato",subset=.(start.label==1))+
+  labs(x="",y="For X3",title="After N")+thema
+
+multiplot(q1,q3,q5,q2,q4,q6, cols=2)
+@
+\caption{Plot of estimated density}
+\end{centering}
+\end{figure}
+
+Plotting the estimated density for different starting values for all the components:
+\begin{figure}[H]
+\begin{centering}
+<<echo=F, fig=TRUE,height=4,width=8>>=
+## estimated density for different starting values
+q7<-q+ geom_density(mapping = aes(x=samples.X1,group=factor(start.label),colour=factor(start.label)))+
+  labs(x="",y="For X1",colour="Label of starting values")+thema
+q8<-q+ geom_density(mapping = aes(x=samples.X2,group=factor(start.label),colour=factor(start.label)))+
+  labs(x="",y="For X2",colour="Label of starting values")+thema
+q9<-q+ geom_density(mapping = aes(x=samples.X3,group=factor(start.label),colour=factor(start.label)))+
+  labs(x="",y="For X3",colour="Label of starting values")+thema
+multiplot(q7,q8,q9, cols=1)
+@
+\caption{Plot of estimated density for all 3 components}
+\end{centering}
+\end{figure}
+
+From the above plots, the estimated densities after $n/2$ and after $n$ look reasonably identical for all the 3 components. Also the estimated density for different starting values also overlap to a good extent. This further verifies the robustness and convergence of the algorithm.
+
+\item The effective samples obtained for every $10,000$ samples generated were found to be \textbf{\Sexpr{round(min(M[[1]][[6]]),digits=0)}}. This was calculated by taking the minimum of the effective samples obtained for the 3 individual components. The number of effective samples generated per second was \textbf{\Sexpr{round(min(M[[1]][[7]]),digits=0)}}. 
+\clearpage
+\item The following table gives the required information:
+\begin{table}[H]
+\centering
+\caption{Summary of above 3 algorithms for target as Multivariate truncated normal}
+\label{my-label}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+&Mean estimates & Standard errors & ESS for 10,000 samples & ESS per second \\ \hline
+Rejection Sampling &(\Sexpr{round(Alg1.m[1],digits=2)}, \Sexpr{round(Alg1.m[2],digits=2)}, \Sexpr{round(Alg1.m[3],digits=2)})&(\Sexpr{round(Alg1.se[1],digits=2)}, \Sexpr{round(Alg1.se[2],digits=2)}, \Sexpr{round(Alg1.se[3],digits=2)})&$10000$&\Sexpr{round(Alg1.ESSr,digits=0)} \\ \hline
+Importance Sampling                                                                              & (\Sexpr{round(Alg2.m[1],digits=2)}, \Sexpr{round(Alg2.m[2],digits=2)}, \Sexpr{round(Alg2.m[3],digits=2)})&(\Sexpr{round(Alg2.se[1],digits=2)}, \Sexpr{round(Alg2.se[2],digits=2)}, \Sexpr{round(Alg2.se[3],digits=2)})&\Sexpr{round(Alg2.ESS,digits=0)}&\Sexpr{round(Alg2.ESSr,digits=0)} \\ \hline
+Metropolis-Hastings                                                                              &  (\Sexpr{round(Alg3.m[1],digits=2)}, \Sexpr{round(Alg3.m[2],digits=2)}, \Sexpr{round(Alg3.m[3],digits=2)})&(\Sexpr{round(Alg3.se[1],digits=2)}, \Sexpr{round(Alg3.se[2],digits=2)}, \Sexpr{round(Alg3.se[3],digits=2)})&\Sexpr{round(Alg3.ESS,digits=0)}&\Sexpr{round(Alg3.ESSr,digits=0)} \\ \hline
+\end{tabular}
+\end{table}
+\end{enumerate}
+\end{document}

@@ -1,0 +1,17 @@
+{
+    "contents" : "\n# This is the server logic for a Shiny web application.\n# You can find out more about building applications with Shiny here:\n#\n# http://shiny.rstudio.com\n#\n\nlibrary(shiny)\nlibrary(MASS)\nlibrary(ggplot2)\n\nshinyServer(function(input, output) {\n  source(\"lda.function.R\")\n  source(\"QDA.R\")\n  source(\"logit.R\")\n  source(\"simulation_function.R\")\n  output$distPlot <- renderPlot({\n    input$go\n    sim<-isolate(sim.logistic(n=input$n,n.cov=2,beta=c(input$beta.0,input$beta.1,input$beta.2)))\n    ## summary(factor(sim$y))\n    ########LDA\n    \n    lda.model <- my.lda(response = sim[,1],formula = \"~.\",data = data.frame(sim[,-1]))\n    lda.pred <- predict.my.lda(x = sim[,-1],model = lda.model,prior = c(0.5,0.5))\n    ##miss.class[i,1] <- mscls.rt(tr.test[,1],lda.pred)\n    \n    #######QDA\n    qda.pred<-rep(NA_integer_,nrow(sim))\n    for(k in 1:nrow(sim)){\n      qda.pred[k]<-QDA.1(sim,as.matrix(sim[k,-1]))\n    }\n    ##miss.class[i,2]<-mscls.rt(tr.test[,1],qda.pred)\n    \n    ########Logistic Regression \n    logit.bs <- logit.m(X =cbind(1,sim[,-1]), y = sim[,1])\n    logit.pred <- as.numeric(predict.logit.cl(matrix(logit.bs), X = as.matrix(cbind(1, sim[,-1])))) \n    print(predict.logit(matrix(logit.bs), X = as.matrix(cbind(1, sim[,-1]))))\n    ##miss.class[i,3] <- mscls.rt(sim[,1], logit.pred)\n    print(nrow(lda.pred))\n    df<-data.frame(sim,lda.pred,qda.pred,logit.pred)\n    p<-ggplot(data=df)\n    \n    print(p+geom_point(mapping=aes(x=X2,y=X1,colour=factor(logit.pred),shape=factor(Class),size=factor(qda.pred)))+scale_size_discrete(range = c(3,8))+facet_wrap(~y,nrow = 2))\n    \n    })\n\n})\n",
+    "created" : 1444431985914.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1570442963",
+    "id" : "5948CE8",
+    "lastKnownWriteTime" : 1444438548,
+    "path" : "~/Box Sync/PSU/Fall 2015/Data Mining (STAT 557)/Project 1/shiny_app/server.R",
+    "project_path" : "server.R",
+    "properties" : {
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

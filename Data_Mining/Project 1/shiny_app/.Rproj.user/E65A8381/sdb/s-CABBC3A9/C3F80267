@@ -1,0 +1,17 @@
+{
+    "contents" : "sim.logistic <- function(n, n.cov, beta, Sigma = diag(.1,nrow = n.cov) ){\n  # Make X multivariate normal\n  X <- mvrnorm(n = n, mu = rep(0, n.cov), Sigma = Sigma )\n  X <- cbind(rep(1, n), X)\n  # Simulate response given X\n  lpred <- X%*%beta\n  nums <- exp(lpred)\n  dens <- 1 + apply(X = nums, FUN = sum, MARGIN = 1)\n  p <- cbind(nums/dens, 1- nums/dens)\n  y <- apply(X = p, FUN = sample, MARGIN = 1, x = c(1,0), size = 1, replace = FALSE )\n  data <- data.frame(cbind(y, X[,-1]))\n  v.names <- rep(NA, n.cov)\n  for(i in 1:n.cov){\n    v.names[i] <- paste(\"X\",i, sep  = \"\")\n  }\n  names(data)<- c(\"y\", v.names)\n  invisible(data)\n}\n\n## \n## Example\n##\n# \n# betas <- runif(n = (4 + 1))   # True betas (+ intercept beta)\n# datas <- sim.logistic(n = 10, n.cov = 4, betas)\n",
+    "created" : 1444433840087.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "815195648",
+    "id" : "C3F80267",
+    "lastKnownWriteTime" : 1444432726,
+    "path" : "~/Box Sync/PSU/Fall 2015/Data Mining (STAT 557)/Project 1/shiny_app/simulation_function.R",
+    "project_path" : "simulation_function.R",
+    "properties" : {
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

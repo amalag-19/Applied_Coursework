@@ -1,0 +1,40 @@
+\begin{thebibliography}{1}
+
+\bibitem{hsieh2013big}
+C.-J. Hsieh, M.~A. Sustik, I.~S. Dhillon, P.~K. Ravikumar, and R.~Poldrack,
+  ``Big \& quic: Sparse inverse covariance estimation for a million
+  variables,'' in {\em Advances in Neural Information Processing Systems},
+  pp.~3165--3173, 2013.
+
+\bibitem{friedman2001elements}
+J.~Friedman, T.~Hastie, and R.~Tibshirani, {\em The elements of statistical
+  learning}, vol.~1.
+\newblock Springer series in statistics Springer, Berlin, 2001.
+
+\bibitem{ben2007bayesian}
+I.~Ben-Gal, ``Bayesian networks,'' {\em Encyclopedia of statistics in quality
+  and reliability}, 2007.
+
+\bibitem{fig1}
+``{Bayesian Network} an example.'' \url{http://www.pr-owl.org/basics/bn.php}.
+\newblock Accessed: 2015-12-03.
+
+\bibitem{fig2}
+``{Markov Random field} an example.'' \url{https://github.com/tansey/vsmrfs}.
+\newblock Accessed: 2015-12-03.
+
+\bibitem{yuan2007model}
+M.~Yuan and Y.~Lin, ``Model selection and estimation in the gaussian graphical
+  model,'' {\em Biometrika}, vol.~94, no.~1, pp.~19--35, 2007.
+
+\bibitem{banerjee2008model}
+O.~Banerjee, L.~El~Ghaoui, and A.~d'Aspremont, ``Model selection through sparse
+  maximum likelihood estimation for multivariate gaussian or binary data,''
+  {\em The Journal of Machine Learning Research}, vol.~9, pp.~485--516, 2008.
+
+\bibitem{friedman2008sparse}
+J.~Friedman, T.~Hastie, and R.~Tibshirani, ``Sparse inverse covariance
+  estimation with the graphical lasso,'' {\em Biostatistics}, vol.~9, no.~3,
+  pp.~432--441, 2008.
+
+\end{thebibliography}

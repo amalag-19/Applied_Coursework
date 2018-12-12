@@ -1,0 +1,87 @@
+\begin{thebibliography}{10}
+
+\bibitem{brooks2011handbook}
+S.~Brooks, A.~Gelman, G.~Jones, and X.-L. Meng, {\em Handbook of Markov Chain
+  Monte Carlo}.
+\newblock CRC press, 2011.
+
+\bibitem{li2015extending}
+J.~Li, D.~J. Nott, Y.~Fan, and S.~A. Sisson, ``Extending approximate bayesian
+  computation methods to high dimensions via gaussian copula,'' {\em arXiv
+  preprint arXiv:1504.04093}, 2015.
+
+\bibitem{yin2012model}
+J.~Yin and H.~Li, ``Model selection and estimation in the matrix normal
+  graphical model,'' {\em Journal of multivariate analysis}, vol.~107,
+  pp.~119--140, 2012.
+
+\bibitem{beaumont2002approximate}
+M.~A. Beaumont, W.~Zhang, and D.~J. Balding, ``Approximate bayesian computation
+  in population genetics,'' {\em Genetics}, vol.~162, no.~4, pp.~2025--2035,
+  2002.
+
+\bibitem{marjoram2003markov}
+P.~Marjoram, J.~Molitor, V.~Plagnol, and S.~Tavar{\'e}, ``Markov chain monte
+  carlo without likelihoods,'' {\em Proceedings of the National Academy of
+  Sciences}, vol.~100, no.~26, pp.~15324--15328, 2003.
+
+\bibitem{ratmann2009model}
+O.~Ratmann, C.~Andrieu, C.~Wiuf, and S.~Richardson, ``Model criticism based on
+  likelihood-free inference, with an application to protein network
+  evolution,'' {\em Proceedings of the National Academy of Sciences}, vol.~106,
+  no.~26, pp.~10576--10581, 2009.
+
+\bibitem{sisson2007sequential}
+S.~A. Sisson, Y.~Fan, and M.~M. Tanaka, ``Sequential monte carlo without
+  likelihoods,'' {\em Proceedings of the National Academy of Sciences},
+  vol.~104, no.~6, pp.~1760--1765, 2007.
+
+\bibitem{bortot2007inference}
+P.~Bortot, S.~G. Coles, and S.~A. Sisson, ``Inference for stereological
+  extremes,'' {\em Journal of the American Statistical Association}, vol.~102,
+  no.~477, pp.~84--92, 2007.
+
+\bibitem{andrieu2007expected}
+C.~Andrieu, A.~Doucet, and G.~Roberts, ``The expected auxiliary variable method
+  for monte carlo simulation,'' {\em Unpublished paper}, 2007.
+
+\bibitem{blum2010non}
+M.~G. Blum and O.~Fran{\c{c}}ois, ``Non-linear regression models for
+  approximate bayesian computation,'' {\em Statistics and Computing}, vol.~20,
+  no.~1, pp.~63--73, 2010.
+
+\bibitem{van2000asymptotic}
+A.~W. Van~der Vaart, {\em Asymptotic statistics}, vol.~3.
+\newblock Cambridge university press, 2000.
+
+\bibitem{sklar1959fonctions}
+M.~Sklar, {\em Fonctions de r{\'e}partition {\`a} n dimensions et leurs
+  marges}.
+\newblock Universit{\'e} Paris 8, 1959.
+
+\bibitem{yuan2007model}
+M.~Yuan and Y.~Lin, ``Model selection and estimation in the gaussian graphical
+  model,'' {\em Biometrika}, vol.~94, no.~1, pp.~19--35, 2007.
+
+\bibitem{friedman2001elements}
+J.~Friedman, T.~Hastie, and R.~Tibshirani, {\em The elements of statistical
+  learning}, vol.~1.
+\newblock Springer series in statistics Springer, Berlin, 2001.
+
+\bibitem{friedman2008sparse}
+J.~Friedman, T.~Hastie, and R.~Tibshirani, ``Sparse inverse covariance
+  estimation with the graphical lasso,'' {\em Biostatistics}, vol.~9, no.~3,
+  pp.~432--441, 2008.
+
+\bibitem{hsieh2013big}
+C.-J. Hsieh, M.~A. Sustik, I.~S. Dhillon, P.~K. Ravikumar, and R.~Poldrack,
+  ``Big \& quic: Sparse inverse covariance estimation for a million
+  variables,'' in {\em Advances in Neural Information Processing Systems},
+  pp.~3165--3173, 2013.
+
+\bibitem{dawid1981some}
+A.~P. Dawid, ``Some matrix-variate distribution theory: notational
+  considerations and a bayesian application,'' {\em Biometrika}, vol.~68,
+  no.~1, pp.~265--274, 1981.
+
+\end{thebibliography}
